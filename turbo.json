@@ -1,0 +1,21 @@
+{
+	"$schema": "https://turborepo.dev/schema.json",
+	"ui": "tui",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"inputs": ["$TURBO_DEFAULT$", ".env*"],
+			"outputs": [".output/**", "./vercel/output/**"],
+			"env": ["VITE_*", "CONVEX_*", "GOOGLE_*", "BETTER_*", "EXPO_PUBLIC_*"]
+		},
+		"start": {
+			"dependsOn": ["^start"],
+			"persistent": true
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true,
+			"env": ["NODE_ENV", "CLOUDFLARE_*", "MONOREPO_AUTH_URL"]
+		}
+	}
+}

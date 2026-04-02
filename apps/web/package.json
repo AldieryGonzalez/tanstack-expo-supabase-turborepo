@@ -1,0 +1,40 @@
+{
+	"name": "@monorepo/web",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev --port 3000",
+		"build": "vite build",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"@monorepo/backend": "workspace:*",
+		"@convex-dev/better-auth": "^0.10.10",
+		"@convex-dev/react-query": "0.1.0",
+		"@tailwindcss/vite": "^4.0.6",
+		"@tanstack/react-devtools": "^0.7.0",
+		"@tanstack/react-query": "^5.90.16",
+		"@tanstack/react-router": "^1.132.0",
+		"@tanstack/react-router-devtools": "^1.132.0",
+		"@tanstack/react-router-ssr-query": "^1.149.3",
+		"@tanstack/react-start": "^1.149.4",
+		"@tanstack/router-plugin": "^1.132.0",
+		"better-auth": "1.4.9",
+		"convex": "^1.31.4",
+		"nitro": "^3.0.1-alpha.1",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0",
+		"tailwindcss": "^4.0.6",
+		"vite-tsconfig-paths": "^6.0.2"
+	},
+	"devDependencies": {
+		"@tanstack/devtools-vite": "^0.3.11",
+		"@types/node": "^25.0.8",
+		"@types/react": "^19.2.0",
+		"@types/react-dom": "^19.2.0",
+		"@vitejs/plugin-react": "^5.0.4",
+		"babel-plugin-react-compiler": "^1.0.0",
+		"typescript": "^5.7.2",
+		"vite": "^7.1.7"
+	}
+}
