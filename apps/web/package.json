@@ -5,12 +5,13 @@
 	"scripts": {
 		"dev": "vite dev --port 3000",
 		"build": "vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@monorepo/backend": "workspace:*",
-		"@convex-dev/better-auth": "^0.10.10",
-		"@convex-dev/react-query": "0.1.0",
+		"@better-auth/drizzle-adapter": "^1.4.9",
+		"@better-auth/expo": "1.4.9",
+		"@monorepo/db": "workspace:*",
 		"@tailwindcss/vite": "^4.0.6",
 		"@tanstack/react-devtools": "^0.7.0",
 		"@tanstack/react-query": "^5.90.16",
@@ -20,7 +21,6 @@
 		"@tanstack/react-start": "^1.149.4",
 		"@tanstack/router-plugin": "^1.132.0",
 		"better-auth": "1.4.9",
-		"convex": "^1.31.4",
 		"nitro": "^3.0.1-alpha.1",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",

@@ -6,7 +6,41 @@
 			"dependsOn": ["^build"],
 			"inputs": ["$TURBO_DEFAULT$", ".env*"],
 			"outputs": [".output/**", "./vercel/output/**"],
-			"env": ["VITE_*", "CONVEX_*", "GOOGLE_*", "BETTER_*", "EXPO_PUBLIC_*"]
+			"env": [
+				"DATABASE_*",
+				"VITE_*",
+				"GOOGLE_*",
+				"BETTER_*",
+				"EXPO_PUBLIC_*",
+				"MOBILE_APP_SCHEME"
+			]
+		},
+		"check-types": {
+			"dependsOn": ["^check-types"],
+			"inputs": ["$TURBO_DEFAULT$", ".env*"]
+		},
+		"db:push": {
+			"cache": false,
+			"inputs": ["$TURBO_DEFAULT$", ".env*"],
+			"interactive": true
+		},
+		"db:up": {
+			"cache": false
+		},
+		"db:down": {
+			"cache": false
+		},
+		"db:generate": {
+			"cache": false,
+			"inputs": ["$TURBO_DEFAULT$", ".env*"]
+		},
+		"db:migrate": {
+			"cache": false,
+			"inputs": ["$TURBO_DEFAULT$", ".env*"]
+		},
+		"db:studio": {
+			"cache": false,
+			"persistent": true
 		},
 		"start": {
 			"dependsOn": ["^start"],
@@ -15,7 +49,15 @@
 		"dev": {
 			"cache": false,
 			"persistent": true,
-			"env": ["NODE_ENV", "CLOUDFLARE_*", "MONOREPO_AUTH_URL"]
+			"env": [
+				"NODE_ENV",
+				"DATABASE_*",
+				"BETTER_*",
+				"GOOGLE_*",
+				"EXPO_PUBLIC_*",
+				"VITE_*",
+				"MOBILE_APP_SCHEME"
+			]
 		}
 	}
 }

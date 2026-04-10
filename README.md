@@ -1,219 +1,136 @@
 # Monorepo Template
 
-A full-stack monorepo template with a **web app** (TanStack Start) and **mobile app** (Expo) sharing a **Convex** backend with **Better Auth** authentication.
+A full-stack monorepo template with a TanStack Start web app, an Expo mobile app, and a shared PostgreSQL/Drizzle data layer. Authentication is hosted by the web app with Better Auth, and the database is intended to be backed by Supabase Postgres.
 
-## Tech Stack
+## Stack
 
-- **Monorepo:** [Turborepo](https://turbo.build/) + [Bun](https://bun.sh/)
-- **Web:** [TanStack Start](https://tanstack.com/start) + [TanStack Router](https://tanstack.com/router) + [Tailwind CSS v4](https://tailwindcss.com/)
-- **Mobile:** [Expo](https://expo.dev/) + [React Native](https://reactnative.dev/) + [Expo Router](https://docs.expo.dev/router/introduction/)
-- **Backend:** [Convex](https://convex.dev/)
-- **Auth:** [Better Auth](https://better-auth.com/) (Google OAuth, magic link, anonymous, 2FA)
-- **Linting/Formatting:** [Biome](https://biomejs.dev/)
+- Turborepo + Bun
+- TanStack Start + TanStack Router + Tailwind CSS
+- Expo + Expo Router
+- PostgreSQL + Drizzle ORM
+- Better Auth
 
-## Project Structure
+## Workspace Layout
 
 ```text
 ├── apps/
-│   ├── web/                    # TanStack Start web application
-│   └── mobile/                 # Expo React Native app
+│   ├── web/
+│   └── mobile/
 ├── packages/
-│   ├── backend/                # Convex backend shared by web + mobile
-│   ├── dev-tunnel/             # Optional Cloudflare tunnel runner for local OAuth
-│   └── typescript-config/      # Shared TypeScript configs
-├── docs/
-│   ├── AUTH_PORTING_NOTES.md
-│   └── LOCAL_DEV_CONVEX_CLOUDFLARE.md
+│   ├── db/
+│   └── typescript-config/
 ├── turbo.json
 ├── biome.json
 └── package.json
 ```
 
-## Prerequisites
+## Environment
 
-- [Bun](https://bun.sh/) (v1.3.6+)
-- A [Convex](https://convex.dev/) account
-- (Optional) [Google Cloud Console](https://console.cloud.google.com/) project for Google OAuth
-- (Optional, for real-device mobile OAuth on local backend) [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
+### Required server env
+
+Set these where the web app runs:
+
+```env
+BETTER_AUTH_SECRET=replace-me
+GOOGLE_CLIENT_ID=replace-me
+GOOGLE_CLIENT_SECRET=replace-me
+```
+
+`DATABASE_URL` is only required when you want the apps and Drizzle to target a hosted database such as Supabase. If it is unset, the shared DB package falls back to `postgres://postgres:postgres@127.0.0.1:5432/postgres`.
+
+### Optional server env
+
+```env
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_TRUSTED_ORIGINS=http://localhost:3000
+MOBILE_APP_SCHEME=myapp
+DATABASE_SSL=true
+```
+
+Notes:
+
+- For Supabase pooler connections, keep prepared statements disabled. The shared DB package already does this.
+- For local Postgres, set `DATABASE_SSL=false`.
+- `BETTER_AUTH_URL` should be the public origin serving the web app. Better Auth is mounted at `/api/auth/*`.
+
+### Web env
+
+```env
+VITE_AUTH_BASE_URL=http://localhost:3000
+```
+
+### Mobile env
+
+```env
+EXPO_PUBLIC_AUTH_URL=http://localhost:3000
+```
+
+For iOS simulators, `http://localhost:3000` usually works. For Android emulators or physical devices, point `EXPO_PUBLIC_AUTH_URL` at a reachable host.
 
 ## Getting Started
 
-### 1. Install dependencies
+1. Install dependencies.
 
 ```bash
 bun install
 ```
 
-### 2. Initialize Convex
+2. Generate the Better Auth Drizzle schema if you change auth plugins or providers.
 
 ```bash
-cd packages/backend
-npx convex dev
+bunx @better-auth/cli@latest generate \
+  --config apps/web/src/lib/auth-server.ts \
+  --output packages/db/src/auth-schema.ts \
+  --yes
 ```
 
-This links your local workspace to a Convex deployment and writes `CONVEX_DEPLOYMENT`.
+3. Start the local Postgres container.
 
-### 3. Choose deployment mode and set env vars
+`bun dev` now includes the `@monorepo/db` package's `dev` task, which starts a Docker-backed Postgres instance on `127.0.0.1:5432`. Docker Desktop or another Docker engine must be running first.
 
-#### Cloud Convex deployment (recommended for staging/prod)
+If you need to stop only the local database:
 
-Use your cloud URLs:
-
-- `*.convex.cloud` for API
-- `*.convex.site` for Better Auth site URL
-
-`apps/web/.env`:
-
-```env
-VITE_CONVEX_URL=https://your-deployment.convex.cloud
-VITE_CONVEX_SITE_URL=https://your-deployment.convex.site
+```bash
+bun run db:down
 ```
 
-`apps/mobile/.env`:
+4. Generate and apply database migrations.
 
-```env
-EXPO_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
-EXPO_PUBLIC_CONVEX_SITE_URL=https://your-deployment.convex.site
+```bash
+bun run db:generate
+bun run db:migrate
 ```
 
-Convex runtime env (Dashboard -> Settings -> Environment Variables):
-
-```env
-BETTER_AUTH_SECRET=your-random-secret-string
-SITE_URL=https://your-deployment.convex.site
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-# Optional
-TRUSTED_ORIGINS=https://your-web-domain.com,https://staging.your-web-domain.com
-MOBILE_APP_SCHEME=myapp
-```
-
-#### Local Convex deployment
-
-For simulator/emulator and local web, direct local URLs work:
-
-`apps/web/.env.local`:
-
-```env
-VITE_CONVEX_URL=http://127.0.0.1:3210
-VITE_CONVEX_SITE_URL=http://127.0.0.1:3211
-```
-
-`apps/mobile/.env.local`:
-
-```env
-EXPO_PUBLIC_CONVEX_URL=http://127.0.0.1:3210
-EXPO_PUBLIC_CONVEX_SITE_URL=http://127.0.0.1:3211
-```
-
-For **real-device mobile Google OAuth** against local Convex, use a tunnel and HTTPS hostnames. See:
-
-- `docs/LOCAL_DEV_CONVEX_CLOUDFLARE.md`
-
-### 4. Run the dev servers
+5. Start the apps.
 
 ```bash
 bun dev
 ```
 
-This starts web, mobile, backend, and the optional tunnel task.
+## Auth Flow
 
-Tunnel task behavior:
-
-- disabled by default
-- set `CLOUDFLARE_TUNNEL_ENABLED=1` to run it from `bun dev`
-
-Example:
-
-```bash
-CLOUDFLARE_TUNNEL_ENABLED=1 \
-CLOUDFLARE_TUNNEL_NAME=monorepo-local \
-CLOUDFLARE_AUTH_HOST=auth-local.your-domain.com \
-CLOUDFLARE_API_HOST=api-local.your-domain.com \
-CLOUDFLARE_WEB_HOST=web-local.your-domain.com \
-bun dev
-```
-
-Generate `BETTER_AUTH_SECRET` with:
-
-```bash
-openssl rand -base64 32
-```
-
-## Auth Setup
-
-Authentication is pre-configured with Better Auth + Convex.
-
-Enabled methods:
-
-- **Anonymous**
-- **Google OAuth**
-- **Magic Link** (email provider required)
-- **Two-Factor (2FA)**
-
-### Auth checklist
-
-1. Ensure Convex runtime `SITE_URL` matches your auth host.
-2. Configure Google callback URI as:
-   - `https://<your-auth-host>/api/auth/callback/google`
-3. For web social sign-in, pass an absolute callback URL on the web origin.
-4. Set optional `TRUSTED_ORIGINS` for additional browser origins.
-5. For mobile production deep links, set `MOBILE_APP_SCHEME` (defaults to `myapp`).
-
-### Test Google OAuth in both apps
-
-After `bun dev`:
-
-1. Open web on `http://localhost:3000` and click **Sign in with Google** on the home screen.
-2. Open mobile (Expo) and click **Sign in with Google** on the home screen.
-3. Confirm each app shows `Signed in as ...` after callback.
-4. Click **Sign out** in each app and confirm state returns to `Not signed in`.
-
-### Auth plumbing
-
-| File | Purpose |
-|------|---------|
-| `packages/backend/convex/auth.ts` | Better Auth server config, trusted origins, cross-domain plugin |
-| `packages/backend/convex/http.ts` | Auth HTTP routes with CORS enabled |
-| `apps/web/src/lib/auth-client.ts` | Web auth client with cross-domain client plugin |
-| `apps/web/src/lib/auth-server.ts` | Web SSR auth integration |
-| `apps/web/src/routes/api/auth/$.ts` | Web auth API route handler |
-| `apps/mobile/lib/convex-urls.ts` | Mobile Convex API/site URL resolver |
-| `apps/mobile/lib/auth-client.ts` | Mobile auth client setup |
-| `packages/backend/scripts/dev.sh` | Syncs Convex `SITE_URL` before `convex dev` |
-
-### Magic Link email
-
-In `packages/backend/convex/auth.ts`, replace the `console.log` in `sendMagicLink` with your email provider integration.
+- The web app hosts Better Auth at `/api/auth/*` in [apps/web/src/routes/api/auth/$.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/apps/web/src/routes/api/auth/$.ts).
+- The Better Auth server is configured in [apps/web/src/lib/auth-server.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/apps/web/src/lib/auth-server.ts).
+- The shared Drizzle client lives in [packages/db/src/database.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/packages/db/src/database.ts).
+- Better Auth schema tables are generated into [packages/db/src/auth-schema.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/packages/db/src/auth-schema.ts).
+- The mobile app talks to the hosted auth backend via [apps/mobile/lib/auth-base-url.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/apps/mobile/lib/auth-base-url.ts).
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `bun dev` | Start all dev tasks |
-| `bun run dev:web` | Start only the web app |
-| `bun run dev:mobile` | Start only the mobile app |
-| `bun run dev:backend` | Start only the backend |
-| `bun run dev:tunnel` | Start only the tunnel task |
-| `bun run build` | Build all apps |
-| `bun run format-and-lint` | Run Biome checks |
-| `bun run format-and-lint:fix` | Auto-fix Biome issues |
-| `bun run check-types` | Type-check all packages |
+- `bun dev` runs package dev tasks, including the local Postgres container owned by `@monorepo/db`.
+- `bun run dev:web` starts only the web app.
+- `bun run dev:mobile` starts only the mobile app.
+- `bun run db:up` starts the local Postgres container.
+- `bun run db:down` stops the local Postgres container.
+- `bun run db:generate` creates Drizzle migration files.
+- `bun run db:migrate` applies Drizzle migrations and auto-starts the local Postgres container when `DATABASE_URL` is unset.
+- `bun run db:push` pushes the current schema and auto-starts the local Postgres container when `DATABASE_URL` is unset.
+- `bun run db:studio` opens Drizzle Studio and auto-starts the local Postgres container when `DATABASE_URL` is unset.
+- `bun run check-types` runs package typechecks.
+- `bun run build` builds the workspace.
 
-## Carry-Over Analysis
+## Next Customization Points
 
-Changes ported from the sibling `educanto` repo are documented in:
-
-- `docs/AUTH_PORTING_NOTES.md`
-
-That file explains what was carried over to the template, what was intentionally left out, and why.
-
-## Customization
-
-1. Rename package names in all `package.json` files.
-2. Add your schema in `packages/backend/convex/schema.ts`.
-3. Add Convex functions in `packages/backend/convex/`.
-4. Add web routes in `apps/web/src/routes/`.
-5. Add mobile screens in `apps/mobile/app/`.
-6. Update trusted origins via Convex runtime env (`SITE_URL`, `TRUSTED_ORIGINS`).
-7. Update Expo app scheme in `apps/mobile/app.json` and `MOBILE_APP_SCHEME`.
+- Add your application tables next to [packages/db/src/auth-schema.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/packages/db/src/auth-schema.ts) and re-export them from [packages/db/src/schema.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/packages/db/src/schema.ts).
+- Expand [apps/web/src/lib/auth-server.ts](/Users/aldiery/repos/tanstack-expo-supabase-turborepo/apps/web/src/lib/auth-server.ts) if you want email/password, magic links, OTP, or additional providers.
+- Point `EXPO_PUBLIC_AUTH_URL` at a reachable web origin for native-device authentication.

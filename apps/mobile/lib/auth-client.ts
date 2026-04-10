@@ -1,15 +1,12 @@
 import { expoClient } from "@better-auth/expo/client";
-import { convexClient } from "@convex-dev/better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
-import { convexSiteUrl } from "@/lib/convex-urls";
+import { authBaseUrl } from "@/lib/auth-base-url";
 
-const authBaseUrl = convexSiteUrl;
-
-if (!process.env.EXPO_PUBLIC_CONVEX_SITE_URL) {
+if (!process.env.EXPO_PUBLIC_AUTH_URL) {
 	console.warn(
-		`[auth] EXPO_PUBLIC_CONVEX_SITE_URL is not set. Using fallback: ${authBaseUrl}`,
+		`[auth] EXPO_PUBLIC_AUTH_URL is not set. Using fallback: ${authBaseUrl}`,
 	);
 }
 
@@ -21,6 +18,5 @@ export const authClient = createAuthClient({
 			storagePrefix: Constants.expoConfig?.scheme as string,
 			storage: SecureStore,
 		}),
-		convexClient(),
 	],
 });

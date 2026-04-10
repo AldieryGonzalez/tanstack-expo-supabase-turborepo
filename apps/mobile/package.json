@@ -5,18 +5,16 @@
 	"scripts": {
 		"dev": "expo start",
 		"android": "expo start --android",
-		"ios": "expo start --ios"
+		"ios": "expo start --ios",
+		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@better-auth/expo": "1.4.9",
-		"@monorepo/backend": "workspace:*",
-		"@convex-dev/better-auth": "^0.10.10",
 		"@expo/vector-icons": "^15.0.3",
 		"@react-navigation/bottom-tabs": "^7.4.0",
 		"@react-navigation/elements": "^2.6.3",
 		"@react-navigation/native": "^7.1.8",
 		"better-auth": "1.4.9",
-		"convex": "^1.31.4",
 		"expo": "~54.0.31",
 		"expo-constants": "~18.0.13",
 		"expo-font": "~14.0.10",

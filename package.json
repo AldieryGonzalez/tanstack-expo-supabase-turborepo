@@ -2,6 +2,8 @@
 	"name": "monorepo-template",
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
+		"@types/pg": "^8.20.0",
+		"drizzle-kit": "^0.31.10",
 		"turbo": "^2.7.4",
 		"typescript": "5.9.2"
 	},
@@ -13,10 +15,14 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"dev:backend": "turbo run dev --filter=@monorepo/backend",
 		"dev:mobile": "turbo run dev --filter=@monorepo/mobile",
 		"dev:web": "turbo run dev --filter=@monorepo/web",
-		"dev:tunnel": "turbo run dev --filter=@monorepo/dev-tunnel",
+		"db:up": "turbo run db:up --filter=@monorepo/db",
+		"db:down": "turbo run db:down --filter=@monorepo/db",
+		"db:push": "turbo run db:push --ui=tui --filter=@monorepo/db",
+		"db:generate": "turbo run db:generate --filter=@monorepo/db",
+		"db:migrate": "turbo run db:migrate --filter=@monorepo/db",
+		"db:studio": "turbo run db:studio --filter=@monorepo/db",
 		"format-and-lint": "biome check .",
 		"format-and-lint:fix": "biome check . --write",
 		"check-types": "turbo run check-types"

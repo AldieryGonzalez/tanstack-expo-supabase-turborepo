@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -6,14 +6,61 @@ import {
 	Text,
 	View,
 } from "react-native";
+import { authBaseUrl } from "@/lib/auth-base-url";
 import { authClient } from "@/lib/auth-client";
+
+const getGoogleAuthErrorMessage = (message: string | undefined) => {
+	if (message?.includes("Provider not found")) {
+		return "Google OAuth is not configured on the server. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the web app.";
+	}
+
+	return message ?? "Google sign-in failed.";
+};
 
 export default function Index() {
 	const { data: session, isPending } = authClient.useSession();
 	const [isWorking, setIsWorking] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [isGoogleAuthEnabled, setIsGoogleAuthEnabled] = useState<
+		boolean | null
+	>(null);
+
+	useEffect(() => {
+		let cancelled = false;
+
+		const loadAuthConfig = async () => {
+			try {
+				const response = await fetch(`${authBaseUrl}/api/auth/config`);
+				if (!response.ok) {
+					throw new Error("Failed to load auth config.");
+				}
+				const data = (await response.json()) as {
+					googleAuthEnabled?: boolean;
+				};
+				if (!cancelled) {
+					setIsGoogleAuthEnabled(Boolean(data.googleAuthEnabled));
+				}
+			} catch {
+				if (!cancelled) {
+					setIsGoogleAuthEnabled(true);
+				}
+			}
+		};
+
+		void loadAuthConfig();
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	const signInWithGoogle = async () => {
+		if (!isGoogleAuthEnabled) {
+			setErrorMessage(
+				"Google OAuth is not configured on the server. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the web app.",
+			);
+			return;
+		}
 		setIsWorking(true);
 		setErrorMessage(null);
 		const { error } = await authClient.signIn.social({
@@ -21,7 +68,7 @@ export default function Index() {
 			callbackURL: "/",
 		});
 		if (error) {
-			setErrorMessage(error.message ?? "Google sign-in failed.");
+			setErrorMessage(getGoogleAuthErrorMessage(error.message));
 		}
 		setIsWorking(false);
 	};
@@ -36,7 +83,7 @@ export default function Index() {
 		setIsWorking(false);
 	};
 
-	const busy = isPending || isWorking;
+	const busy = isPending || isWorking || isGoogleAuthEnabled === null;
 
 	return (
 		<View style={styles.container}>
@@ -50,11 +97,18 @@ export default function Index() {
 			</Text>
 			<View style={styles.actions}>
 				<Pressable
-					disabled={busy}
+					disabled={busy || !isGoogleAuthEnabled}
 					onPress={() => void signInWithGoogle()}
-					style={[styles.primaryButton, busy && styles.disabledButton]}
+					style={[
+						styles.primaryButton,
+						(busy || !isGoogleAuthEnabled) && styles.disabledButton,
+					]}
 				>
-					<Text style={styles.primaryButtonText}>Sign in with Google</Text>
+					<Text style={styles.primaryButtonText}>
+						{isGoogleAuthEnabled === false
+							? "Google OAuth unavailable"
+							: "Sign in with Google"}
+					</Text>
 				</Pressable>
 				<Pressable
 					disabled={busy || !session}
@@ -68,6 +122,12 @@ export default function Index() {
 				</Pressable>
 			</View>
 			{busy ? <ActivityIndicator /> : null}
+			{isGoogleAuthEnabled === false ? (
+				<Text style={styles.infoText}>
+					Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the web app to enable
+					Google sign-in.
+				</Text>
+			) : null}
 			{errorMessage ? (
 				<Text style={styles.errorText}>{errorMessage}</Text>
 			) : null}
@@ -128,6 +188,11 @@ const styles = StyleSheet.create({
 	},
 	errorText: {
 		color: "#dc2626",
+		fontSize: 14,
+		textAlign: "center",
+	},
+	infoText: {
+		color: "#4b5563",
 		fontSize: 14,
 		textAlign: "center",
 	},
