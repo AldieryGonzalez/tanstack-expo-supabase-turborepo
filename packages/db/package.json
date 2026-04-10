@@ -1,0 +1,31 @@
+{
+	"name": "@monorepo/db",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit",
+		"dev": "sh ./scripts/dev.sh",
+		"db:up": "docker compose -f ./docker-compose.yml up --wait --detach postgres",
+		"db:push": "sh ./scripts/ensure-local-db.sh && drizzle-kit push",
+		"db:generate": "drizzle-kit generate",
+		"db:studio": "sh ./scripts/ensure-local-db.sh && drizzle-kit studio",
+		"db:migrate": "sh ./scripts/ensure-local-db.sh && drizzle-kit migrate",
+		"db:down": "docker compose -f ./docker-compose.yml down"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.45.2",
+		"dotenv": "^16.4.7",
+		"postgres": "^3.4.8"
+	},
+	"devDependencies": {
+		"drizzle-kit": "^0.31.10",
+		"typescript": "5.9.2"
+	}
+}
